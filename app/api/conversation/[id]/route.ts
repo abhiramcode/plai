@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 // AssemblyAI API endpoint
 const TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
+// Define proper types
 interface Utterance {
   speaker: string;
   text: string;
@@ -17,31 +18,36 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check authentication
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id: transcriptId } = await params;
-
+    
+    // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
       method: 'GET',
       headers: {
-        authorization: process.env.ASSEMBLYAI_API_KEY as string,
+        'authorization': process.env.ASSEMBLYAI_API_KEY as string,
         'content-type': 'application/json',
       },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to get transcription status' },
+        { error: 'Failed to get transcription status' }, 
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         { status: 500 }
       );
     }
 
     const data = await response.json();
 
+    // If completed, perform diarization processing
     if (data.status === 'completed') {
+      // Update history with completed transcript
       await supabase
         .from('user_history')
         .update({
@@ -58,7 +64,9 @@ export async function GET(
         .order('created_at', { ascending: false })
         .limit(1);
 
+      // Process the utterances for diarization
       const diarizedText = processDiarization(data.utterances || []);
+
       return NextResponse.json({
         status: data.status,
         transcript: data.text,
@@ -66,19 +74,27 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ status: data.status });
+    // Return current status if not completed
+    return NextResponse.json({
+      status: data.status,
+    });
   } catch (error: unknown) {
     console.error('Error checking transcription status:', error);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
-      { error: 'Failed to check transcription status' },
+      { error: 'Failed to check transcription status' }, 
       { status: 500 }
     );
   }
 }
 
+// Function to process diarization data
 function processDiarization(utterances: Utterance[]): string {
-  if (!utterances?.length) return '';
+  if (!utterances || utterances.length === 0) {
+    return '';
+  }
+
   return utterances
-    .map(u => `Speaker ${u.speaker}: ${u.text}`)
+    .map(utterance => `Speaker ${utterance.speaker}: ${utterance.text}`)
     .join('\n\n');
 }
