@@ -38,6 +38,7 @@ export async function GET(
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to get transcription status' }, 
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         { status: 500 }
       );
     }
@@ -79,6 +80,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error checking transcription status:', error);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
       { error: 'Failed to check transcription status' }, 
       { status: 500 }
