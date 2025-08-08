@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 // AssemblyAI API endpoint
 const TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
-// Define proper types
 interface Utterance {
   speaker: string;
   text: string;
@@ -15,39 +14,34 @@ interface Utterance {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check authentication
     const user = await currentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transcriptId = params.id;
-    
-    // Get transcript status from AssemblyAI
+    const { id: transcriptId } = await params;
+
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
       method: 'GET',
       headers: {
-        'authorization': process.env.ASSEMBLYAI_API_KEY as string,
+        authorization: process.env.ASSEMBLYAI_API_KEY as string,
         'content-type': 'application/json',
       },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to get transcription status' }, 
-        /* eslint-disable @typescript-eslint/no-explicit-any */
+        { error: 'Failed to get transcription status' },
         { status: 500 }
       );
     }
 
     const data = await response.json();
 
-    // If completed, perform diarization processing
     if (data.status === 'completed') {
-      // Update history with completed transcript
       await supabase
         .from('user_history')
         .update({
@@ -64,9 +58,7 @@ export async function GET(
         .order('created_at', { ascending: false })
         .limit(1);
 
-      // Process the utterances for diarization
       const diarizedText = processDiarization(data.utterances || []);
-
       return NextResponse.json({
         status: data.status,
         transcript: data.text,
@@ -74,27 +66,19 @@ export async function GET(
       });
     }
 
-    // Return current status if not completed
-    return NextResponse.json({
-      status: data.status,
-    });
-  } catch (error) {
+    return NextResponse.json({ status: data.status });
+  } catch (error: unknown) {
     console.error('Error checking transcription status:', error);
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
-      { error: 'Failed to check transcription status' }, 
+      { error: 'Failed to check transcription status' },
       { status: 500 }
     );
   }
 }
 
-// Function to process diarization data
 function processDiarization(utterances: Utterance[]): string {
-  if (!utterances || utterances.length === 0) {
-    return '';
-  }
-
+  if (!utterances?.length) return '';
   return utterances
-    .map(utterance => `Speaker ${utterance.speaker}: ${utterance.text}`)
+    .map(u => `Speaker ${u.speaker}: ${u.text}`)
     .join('\n\n');
 }
