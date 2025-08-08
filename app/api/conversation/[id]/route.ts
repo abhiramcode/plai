@@ -13,9 +13,10 @@ interface Utterance {
   end: number;
 }
 
+// This is the correct type definition for Next.js App Router dynamic route handlers
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // Check authentication
@@ -24,7 +25,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transcriptId = params.id;
+    const transcriptId = context.params.id;
     
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
@@ -38,7 +39,6 @@ export async function GET(
     if (!response.ok) {
       return NextResponse.json(
         { error: 'Failed to get transcription status' }, 
-        /* eslint-disable @typescript-eslint/no-explicit-any */
         { status: 500 }
       );
     }
@@ -78,9 +78,8 @@ export async function GET(
     return NextResponse.json({
       status: data.status,
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking transcription status:', error);
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
       { error: 'Failed to check transcription status' }, 
       { status: 500 }
