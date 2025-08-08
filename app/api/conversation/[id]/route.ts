@@ -13,14 +13,10 @@ interface Utterance {
   end: number;
 }
 
-// Define the expected route context type
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: Request, context: RouteContext) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     // Check authentication
     const user = await currentUser();
@@ -28,20 +24,21 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transcriptId = context.params.id;
-
+    const transcriptId = params.id;
+    
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
       method: 'GET',
       headers: {
-        authorization: process.env.ASSEMBLYAI_API_KEY as string,
+        'authorization': process.env.ASSEMBLYAI_API_KEY as string,
         'content-type': 'application/json',
       },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to get transcription status' },
+        { error: 'Failed to get transcription status' }, 
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         { status: 500 }
       );
     }
@@ -83,8 +80,9 @@ export async function GET(request: Request, context: RouteContext) {
     });
   } catch (error) {
     console.error('Error checking transcription status:', error);
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
-      { error: 'Failed to check transcription status' },
+      { error: 'Failed to check transcription status' }, 
       { status: 500 }
     );
   }
