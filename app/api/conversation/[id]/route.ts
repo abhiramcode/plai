@@ -5,20 +5,12 @@ import { supabase } from '@/lib/supabase';
 // AssemblyAI API endpoint
 const TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
-// Define proper types for utterances
+// Define proper types
 interface Utterance {
   speaker: string;
   text: string;
   start: number;
   end: number;
-}
-
-interface TranscriptResponse {
-  id: string;
-  status: string;
-  text: string;
-  utterances?: Utterance[];
-  error?: string;
 }
 
 export async function GET(
@@ -33,7 +25,6 @@ export async function GET(
     }
 
     const transcriptId = params.id;
-    console.log(`Checking transcript status for ID: ${transcriptId}`);
     
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
@@ -51,14 +42,11 @@ export async function GET(
       );
     }
 
-    const data = await response.json() as TranscriptResponse;
-    console.log('Transcript status:', data.status);
+    const data = await response.json();
 
     // If completed, perform diarization processing
     if (data.status === 'completed') {
       // Update history with completed transcript
-      console.log('Transcript completed, processing utterances');
-        console.log('Utterances available:', !!data.utterances);
       await supabase
         .from('user_history')
         .update({
