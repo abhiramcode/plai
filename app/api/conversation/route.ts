@@ -81,14 +81,14 @@ export async function POST(request: Request) {
         transcript_id: transcriptData.id,
         status: transcriptData.status,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in file processing:', error);
       return NextResponse.json(
         { error: 'Failed to process audio file' }, 
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error processing audio:', error);
     return NextResponse.json(
       { error: 'Failed to process audio file' }, 
