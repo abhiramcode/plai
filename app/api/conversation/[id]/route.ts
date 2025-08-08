@@ -33,6 +33,7 @@ export async function GET(
     }
 
     const transcriptId = params.id;
+    console.log(`Checking transcript status for ID: ${transcriptId}`);
     
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
@@ -51,10 +52,13 @@ export async function GET(
     }
 
     const data = await response.json() as TranscriptResponse;
+    console.log('Transcript status:', data.status);
 
     // If completed, perform diarization processing
     if (data.status === 'completed') {
       // Update history with completed transcript
+      console.log('Transcript completed, processing utterances');
+        console.log('Utterances available:', !!data.utterances);
       await supabase
         .from('user_history')
         .update({
