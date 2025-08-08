@@ -15,7 +15,7 @@ interface Utterance {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Check authentication
@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: transcriptId } = await params;
+    const transcriptId = params.id;
     
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
