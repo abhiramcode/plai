@@ -13,10 +13,14 @@ interface Utterance {
   end: number;
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+// Define the expected route context type
+interface RouteContext {
+  params: {
+    id: string;
+  };
+}
+
+export async function GET(request: Request, context: RouteContext) {
   try {
     // Check authentication
     const user = await currentUser();
@@ -24,21 +28,20 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transcriptId = params.id;
-    
+    const transcriptId = context.params.id;
+
     // Get transcript status from AssemblyAI
     const response = await fetch(`${TRANSCRIPT_URL}/${transcriptId}`, {
       method: 'GET',
       headers: {
-        'authorization': process.env.ASSEMBLYAI_API_KEY as string,
+        authorization: process.env.ASSEMBLYAI_API_KEY as string,
         'content-type': 'application/json',
       },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to get transcription status' }, 
-        /* eslint-disable @typescript-eslint/no-explicit-any */
+        { error: 'Failed to get transcription status' },
         { status: 500 }
       );
     }
@@ -80,9 +83,8 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error checking transcription status:', error);
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     return NextResponse.json(
-      { error: 'Failed to check transcription status' }, 
+      { error: 'Failed to check transcription status' },
       { status: 500 }
     );
   }
