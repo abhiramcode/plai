@@ -19,6 +19,7 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   try {
+    console.log("API route called with ID:", context.params.id);
     // Check authentication
     const user = await currentUser();
     if (!user) {
