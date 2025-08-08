@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Card } from '@/components/ui/card';
 
@@ -44,10 +45,17 @@ export function ImageAnalysis() {
       {result && (
         <Card className="p-4 space-y-4">
           <div className="aspect-video relative overflow-hidden rounded-md">
-            <img 
-              src={result.imageUrl} 
-              alt="Uploaded image" 
-              className="object-contain w-full h-full"
+            {/* Use a div with background image as a workaround for local blob URLs */}
+            <div 
+              style={{ 
+                backgroundImage: `url(${result.imageUrl})`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                width: '100%',
+                height: '100%',
+                minHeight: '200px'
+              }}
             />
           </div>
           <div className="p-2 bg-gray-50 rounded-md">

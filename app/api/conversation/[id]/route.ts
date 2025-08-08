@@ -5,6 +5,22 @@ import { supabase } from '@/lib/supabase';
 // AssemblyAI API endpoint
 const TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
 
+// Define proper types for utterances
+interface Utterance {
+  speaker: string;
+  text: string;
+  start: number;
+  end: number;
+}
+
+interface TranscriptResponse {
+  id: string;
+  status: string;
+  text: string;
+  utterances?: Utterance[];
+  error?: string;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -34,7 +50,7 @@ export async function GET(
       );
     }
 
-    const data = await response.json();
+    const data = await response.json() as TranscriptResponse;
 
     // If completed, perform diarization processing
     if (data.status === 'completed') {
@@ -79,7 +95,7 @@ export async function GET(
 }
 
 // Function to process diarization data
-function processDiarization(utterances: any[]) {
+function processDiarization(utterances: Utterance[]): string {
   if (!utterances || utterances.length === 0) {
     return '';
   }

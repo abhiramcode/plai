@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET() {
   try {
     // Test query to check connection
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('user_history')
       .select('id')
       .limit(1);
